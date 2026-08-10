@@ -4,7 +4,7 @@
 
 | Mục | Nội dung |
 |-----|----------|
-| Họ và tên | Học viên |
+| Họ và tên | Hoang Van Huy |
 | Mã học viên | 2A202601356-HoangVanHuy |
 | Repo | K4-Day12-Cloud-Services-And-Deployment |
 
@@ -30,7 +30,7 @@ Chỉ ghi tên biến, không ghi giá trị secret:
 |------|--------|---------|
 | `PORT` | Có | 8000 ở local, cloud tự gán khi deploy |
 | `API_TOKEN` | Có | đọc từ `.env`, không lưu trong tài liệu |
-| `OPENAI_API_KEY` | Cần đặt trên Render | key OpenAI thật, không ghi vào repository |
+| `OPENAI_API_KEY` | Có | key OpenAI thật, không ghi vào repository |
 | `OPENAI_MODEL` | Có | `gpt-4o-mini` |
 | `REDIS_URL` | Có | Render Key Value tự cấp connection string |
 | `BUCKET_CAPACITY` | Có | 10 |
@@ -44,6 +44,8 @@ Chỉ ghi tên biến, không ghi giá trị secret:
 GET https://day12-chat-y28x.onrender.com/healthz: 200 {"status":"ok"}
 GET https://day12-chat-y28x.onrender.com/readyz: 200 {"status":"ready","redis":true}
 POST /chat không có token: 401
+POST /chat có token: 200 — OpenAI thật, usage 118 input / 23 output,
+estimated cost 0.0000315 USD
 ```
 
 ## Ảnh Chụp Minh Chứng

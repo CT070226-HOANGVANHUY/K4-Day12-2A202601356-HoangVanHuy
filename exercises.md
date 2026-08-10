@@ -160,11 +160,12 @@ Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health 
 timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
 tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 
-> Mình chưa có tài khoản hoặc quyền deploy cloud nên không gặp lỗi build trên
-> Railway/Render thật. Khi chạy kiểm tra CP5 lần đầu, test báo:
-> `Chưa điền Public URL thật vào DEPLOYMENT.md.` Nguyên nhân là tài liệu vẫn
-> chứa URL mẫu và `.env` đang để `LOCAL_FALLBACK=false`, trong khi service
-> public chưa tồn tại. Mình xử lý bằng cách chạy Docker Compose local, đặt
-> `LOCAL_FALLBACK=true`, kiểm tra `chat` và `redis` đều healthy, rồi cập nhật
-> `DEPLOYMENT.md` và chụp ảnh `/healthz` cùng Swagger UI. Kết quả CP5 fallback
-> là 8 test pass và 5 test public được bỏ qua.
+> Khi mở URL gốc `/`, trình duyệt nhận `404 {"detail":"Not Found"}`. Tôi
+> kiểm tra các route trong `app/main.py` và xác định đây là API service chưa
+> khai báo trang chủ, không phải lỗi Render; `/healthz`, `/readyz` và `/docs`
+> vẫn lần lượt trả 200. Sau đó, lần gọi `/chat` đầu tiên còn trả câu mẫu của
+> mock LLM vì `.env` trên máy không được upload lên Render. Tôi đặt
+> `OPENAI_API_KEY` trong Render Dashboard và redeploy commit `9f8a7cd`.
+> Kiểm tra lại bằng `Authorization: Bearer <API_TOKEN>` cho kết quả 200,
+> có usage và chi phí OpenAI. CP5 hiện đạt 9/9 test public, phần bắt buộc
+> đạt 100/100.
