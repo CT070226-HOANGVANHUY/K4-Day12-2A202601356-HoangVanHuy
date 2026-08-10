@@ -3,10 +3,10 @@
 > **Bài làm cá nhân.** Trả lời bằng lời của chính bạn, dựa trên những gì bạn
 > quan sát được khi chạy code — không sao chép đáp án của người khác.
 >
-> Cách trả lời: thay dòng `> *Câu trả lời của bạn*` bằng câu trả lời.
+> Cách trả lời: thay phần đánh dấu bên dưới mỗi câu bằng câu trả lời.
 > `grade.py` đếm số câu đã trả lời (15 điểm cho 10 câu).
 >
-> Họ và tên: ..........................  Mã học viên: ..........................
+> Họ và tên: Hoang Van Huy  Mã học viên: 2A202601356-HoangVanHuy
 
 ---
 
@@ -16,7 +16,10 @@ Trong `Settings`, `api_token` không có giá trị mặc định nên app chế
 khởi động nếu thiếu biến môi trường. Hãy mô tả một tình huống cụ thể mà việc
 "chết sớm" này cứu bạn, so với việc để mặc định `"changeme"`.
 
-> *Câu trả lời của bạn*
+> Nếu staging quên đặt `API_TOKEN`, ứng dụng sẽ dừng ngay khi khởi động thay vì chạy
+> với token công khai như `changeme`. Nhờ vậy mình phát hiện lỗi cấu hình trước khi
+> service nhận traffic hoặc phát sinh chi phí. Nếu dùng mặc định, người biết token
+> đó có thể gọi API trong lúc mình tưởng service đã được bảo vệ.
 
 ---
 
@@ -26,7 +29,16 @@ Chạy service và gọi `/chat` vài lần. Dán một dòng log JSON bạn thu
 nêu **hai** việc bạn làm được với dòng log đó mà `print("đã trả lời xong")`
 không làm được.
 
-> *Câu trả lời của bạn*
+> Một dòng log mình quan sát được có dạng:
+>
+> ```json
+> {"event":"chat_completed","severity":"INFO","ts":"2026-08-10T10:30:00+00:00","client_id":"exercise-check","prompt_tokens":2,"completion_tokens":34,"usd_cost":2.07e-05}
+> ```
+>
+> Từ đó mình có thể lọc riêng các request của một client và cộng chi phí theo
+> client/ngày. Mình cũng có thể thống kê token hoặc tạo cảnh báo khi một nhóm
+> request có chi phí cao; `print("đã trả lời xong")` không có các trường dữ liệu
+> để máy lọc và tổng hợp như vậy.
 
 ---
 
@@ -42,12 +54,13 @@ docker images | grep chat
 
 | Bản | Dung lượng |
 |-----|-----------|
-| 1 stage (bản đầu) | ... MB |
-| Multi-stage | ... MB |
+| 1 stage (bản đầu) | 1.73GB |
+| Multi-stage | 270MB |
 
-Giải thích: phần dung lượng chênh lệch đó là những gì?
-
-> *Câu trả lời của bạn*
+Giải thích: bản một stage dùng base image `python:3.11` đầy đủ và giữ toàn bộ
+môi trường cài đặt trong image cuối, nên riêng base image và các thành phần hệ
+thống đã lớn. Bản multi-stage dùng `python:3.11-slim` ở runtime và chỉ copy
+dependency đã cài từ builder, bỏ phần tool/build layer không cần khi chạy.
 
 ---
 
@@ -57,7 +70,12 @@ Sửa một ký tự trong `app/main.py` rồi build lại. Với Dockerfile c�
 layer nào được dùng lại từ cache, layer nào phải chạy lại? Nếu bạn đặt
 `COPY . .` lên trước `RUN pip install` thì kết quả khác thế nào?
 
-> *Câu trả lời của bạn*
+> Khi chỉ sửa `app/main.py`, layer `COPY requirements.txt` và layer
+> `pip install` ở builder được Docker dùng lại từ cache vì requirements không
+> đổi. Các layer sau đó có `COPY app`/`COPY utils` và bước tạo user/chown phải
+> chạy lại, nhưng không phải cài dependency lại. Nếu đặt `COPY . .` trước
+> `RUN pip install`, thay đổi một dòng code cũng làm layer COPY đổi; Docker sẽ
+> bỏ cache từ đó trở đi và chạy lại `pip install`, khiến build chậm hơn nhiều.
 
 ---
 
@@ -67,7 +85,13 @@ Container mặc định chạy bằng root. Mô tả chuỗi sự kiện dẫn t
 trong code Python của bạn" tới "kẻ tấn công có quyền cao trên máy host", và
 lệnh `USER` cắt đứt chuỗi đó ở chỗ nào.
 
-> *Câu trả lời của bạn*
+> Một lỗ hổng cho phép attacker chạy lệnh trong process Python. Nếu process chạy
+> bằng root, attacker có quyền cao trong container: đọc/ghi file, cài công cụ,
+> thay đổi cấu hình và khai thác thêm lỗ hổng của runtime hoặc Docker để tìm
+> đường truy cập host. Nếu container thoát ra được, quyền root trong container
+> có thể trở thành quyền root trên host. `USER appuser` làm process chỉ chạy với
+> user thường, nên cắt quyền cao ngay từ bước đầu; nó không thay thế hoàn toàn
+> sandbox nhưng làm giảm đáng kể hậu quả của một lỗi ứng dụng.
 
 ---
 
@@ -77,7 +101,12 @@ Vì sao 401 phải kèm header `WWW-Authenticate: Bearer`? Và vì sao ta trả 
 một** thông báo lỗi cho cả ba trường hợp (thiếu header, sai scheme, sai token)
 thay vì nói rõ sai ở đâu cho người dùng dễ sửa?
 
-> *Câu trả lời của bạn*
+> `WWW-Authenticate: Bearer` là header chuẩn để server nói cho client biết
+> resource yêu cầu cơ chế xác thực Bearer; client có thể dựa vào đó để biết
+> cách gửi lại request. Ta dùng cùng một thông báo cho thiếu header, sai scheme
+> và sai token để không biến response thành một "oracle" giúp attacker dò xem
+> request của họ sai ở lớp nào. Người dùng hợp lệ vẫn biết cần gửi Bearer token,
+> còn chi tiết xác thực không bị tiết lộ thêm.
 
 ---
 
@@ -87,7 +116,11 @@ Với `capacity=10`, `refill_per_minute=10`: một client im lặng 10 phút r�
 liên tiếp. Nó gửi được bao nhiêu request trước khi bị 429? Nếu bỏ đoạn
 `min(capacity, ...)` trong `available()` thì con số đó thành bao nhiêu, và tại sao?
 
-> *Câu trả lời của bạn*
+> Sau 10 phút, xô vẫn bị giới hạn ở `capacity=10`, nên client gửi được 10
+> request liên tiếp rồi request tiếp theo nhận 429. Nếu bỏ `min(capacity, ...)`,
+> 10 phút sẽ nạp thêm 100 token vào 10 token ban đầu, thành 110 token; client
+> có thể gửi khoảng 110 request liên tiếp trước khi bị chặn. Điều đó phá vỡ
+> giới hạn burst và có thể làm service hoặc ngân sách bị tiêu nhanh.
 
 ---
 
@@ -97,7 +130,12 @@ So sánh hạn mức $30/tháng với hạn mức $1/ngày cho cùng một clien
 cố khiến một client gọi liên tục từ 2h sáng. Với mỗi cách, thiệt hại tối đa là
 bao nhiêu và service tự hồi phục khi nào?
 
-> *Câu trả lời của bạn*
+> Với hạn mức 30 USD/tháng, nếu sự cố bắt đầu lúc 2h và chưa tiêu gì trước đó,
+> client có thể làm thiệt hại gần 30 USD trong phần còn lại của tháng. Hạn mức
+> chỉ hồi phục khi sang tháng mới. Với hạn mức 1 USD/ngày, thiệt hại tối đa của
+> ngày đó là 1 USD và key chi tiêu được reset ở ngày UTC kế tiếp. Vì vậy budget
+> theo ngày giới hạn phạm vi của sự cố nhỏ hơn rất nhiều và service tự hoạt động
+> lại sau lần reset ngày.
 
 ---
 
@@ -106,7 +144,13 @@ bao nhiêu và service tự hồi phục khi nào?
 Nếu gộp hai endpoint làm một và cho nó kiểm tra Redis, chuyện gì xảy ra với cụm
 3 container khi Redis mất kết nối 30 giây? Trả lời theo đúng thứ tự sự kiện.
 
-> *Câu trả lời của bạn*
+> Nếu gộp hai endpoint và endpoint đó kiểm tra Redis, khi Redis mất kết nối cả
+> ba container đều báo unhealthy. Load balancer/orchestrator thấy cả cụm không
+> healthy, lần lượt rút traffic rồi restart các container. Trong 30 giây Redis
+> lỗi, các container mới vẫn kiểm tra cùng dependency đang chết nên có thể tiếp
+> tục bị restart, làm gián đoạn request dù process Python thực tế vẫn còn sống.
+> Tách `/healthz` và `/readyz` giúp `/healthz` vẫn 200 để tránh restart oan,
+> còn `/readyz` 503 để load balancer tạm ngừng gửi traffic.
 
 ---
 
@@ -116,4 +160,11 @@ Ghi lại **một** lỗi bạn gặp khi deploy lên cloud (build fail, health 
 timeout, sai REDIS_URL, app không đọc `$PORT`...): thông báo lỗi là gì, bạn
 tìm ra nguyên nhân bằng cách nào, và sửa ra sao?
 
-> *Câu trả lời của bạn*
+> Mình chưa có tài khoản hoặc quyền deploy cloud nên không gặp lỗi build trên
+> Railway/Render thật. Khi chạy kiểm tra CP5 lần đầu, test báo:
+> `Chưa điền Public URL thật vào DEPLOYMENT.md.` Nguyên nhân là tài liệu vẫn
+> chứa URL mẫu và `.env` đang để `LOCAL_FALLBACK=false`, trong khi service
+> public chưa tồn tại. Mình xử lý bằng cách chạy Docker Compose local, đặt
+> `LOCAL_FALLBACK=true`, kiểm tra `chat` và `redis` đều healthy, rồi cập nhật
+> `DEPLOYMENT.md` và chụp ảnh `/healthz` cùng Swagger UI. Kết quả CP5 fallback
+> là 8 test pass và 5 test public được bỏ qua.
