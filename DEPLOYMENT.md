@@ -61,3 +61,9 @@ estimated cost 0.0000315 USD
 
 `API_TOKEN` và `OPENAI_API_KEY` được đặt trong Render Dashboard và không được ghi
 vào repository.
+
+## CI/CD Bonus
+
+- Workflow: `.github/workflows/ci.yml`
+- GitHub Secret bắt buộc: `RENDER_DEPLOY_HOOK`
+- Luồng: test → build Docker → deploy Render → smoke test `/healthz`.
