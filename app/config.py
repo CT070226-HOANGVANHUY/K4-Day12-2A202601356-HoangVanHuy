@@ -52,6 +52,10 @@ class Settings(BaseSettings):
     refill_per_minute: int = 10
     daily_budget_usd: float = 1.0
     log_level: str = "INFO"
+    openai_api_key: str | None = None
+    openai_model: str = "gpt-4o-mini"
+    openai_input_price_per_1k: float = 0.00015
+    openai_output_price_per_1k: float = 0.00060
 
 
 @lru_cache(maxsize=1)

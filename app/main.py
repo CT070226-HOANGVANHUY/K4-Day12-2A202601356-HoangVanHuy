@@ -16,16 +16,15 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-
-from utils.mock_llm import generate_reply
 
 from .auth import verify_bearer_token
 from .config import get_settings
 from .cost_guard import CostGuard
 from .lifecycle import shutdown_guard
+from .llm_provider import LLMProviderError, generate_reply
 from .logging_utils import emit
 from .rate_limiter import TokenBucket
 from .store import ChatStore, get_redis_client
@@ -166,7 +165,10 @@ def chat(
     bucket.consume(client_id)
     guard.check(client_id)
     history = store.history(client_id)
-    result = generate_reply(payload.message, history)
+    try:
+        result = generate_reply(payload.message, history)
+    except LLMProviderError as exc:
+        raise HTTPException(status_code=502, detail="LLM provider unavailable") from exc
     store.add_turn(client_id, "user", payload.message)
     store.add_turn(client_id, "assistant", result["text"])
     guard.record(client_id, result["usd_cost"])

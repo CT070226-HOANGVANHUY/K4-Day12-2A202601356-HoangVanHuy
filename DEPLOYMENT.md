@@ -30,6 +30,8 @@ Chỉ ghi tên biến, không ghi giá trị secret:
 |------|--------|---------|
 | `PORT` | Có | 8000 ở local, cloud tự gán khi deploy |
 | `API_TOKEN` | Có | đọc từ `.env`, không lưu trong tài liệu |
+| `OPENAI_API_KEY` | Cần đặt trên Render | key OpenAI thật, không ghi vào repository |
+| `OPENAI_MODEL` | Có | `gpt-4o-mini` |
 | `REDIS_URL` | Có | Render Key Value tự cấp connection string |
 | `BUCKET_CAPACITY` | Có | 10 |
 | `REFILL_PER_MINUTE` | Có | 10 |
@@ -55,4 +57,5 @@ POST /chat không có token: 401
 - Render: `render.yaml`
 - Docker image bind `0.0.0.0` và đọc biến `PORT`.
 
-API_TOKEN được đặt trong Render Dashboard và không được ghi vào repository.
+`API_TOKEN` và `OPENAI_API_KEY` được đặt trong Render Dashboard và không được ghi
+vào repository.

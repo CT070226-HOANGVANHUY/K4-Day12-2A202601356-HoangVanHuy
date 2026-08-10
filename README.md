@@ -155,7 +155,9 @@ curl -X POST https://<domain>/chat \
 - Git + tài khoản GitHub
 - Tài khoản Railway hoặc Render (miễn phí, đăng ký ~5 phút — cần cho CP5)
 
-Không cần API key của OpenAI hoặc các bên cung cấp API khác: lab dùng **mock LLM** chạy offline.
+Lab mặc định dùng **mock LLM** để test offline. Khi đặt `OPENAI_API_KEY`, endpoint
+`/chat` sẽ gọi OpenAI thật; key chỉ được đặt trong biến môi trường hoặc dashboard
+cloud, không ghi vào repository.
 
 ### Môi trường ảo & thư viện
 
@@ -216,7 +218,7 @@ K4-DAY12-<MãHV>-<HọTên>/
 │   ├── cost_guard.py      #   CP3 — ngân sách theo ngày
 │   ├── store.py           #   CP4 — lịch sử hội thoại trong Redis
 │   └── lifecycle.py       #   CP4 — graceful shutdown
-├── utils/mock_llm.py      # Cho sẵn — LLM giả, không cần API key
+├── utils/mock_llm.py      # Fallback local khi chưa có OPENAI_API_KEY
 ├── Dockerfile             # ★ CP2 — sửa thành multi-stage
 ├── docker-compose.yml     # ★ CP2 — thêm service chat
 ├── .dockerignore          # ★ CP2 — bổ sung mục còn thiếu
